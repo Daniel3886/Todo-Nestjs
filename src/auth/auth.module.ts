@@ -18,12 +18,7 @@ import { AuthGuard } from './auth.guard';
       signOptions: { expiresIn: '60s'},
     })
   ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: AuthGuard,
-    },
-  ],
+  providers: [AuthService],
   controllers: [AuthController],
   exports: [AuthService],
 })
