@@ -5,14 +5,13 @@ import { UsersModule } from 'src/users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
 
-// TODO: Make decent expiration dates for the access token 
 @Module({
   imports: [
     UsersModule,
     JwtModule.register({
       global: true,
       secret: jwtConstants.secret,
-      signOptions: { expiresIn: '60s'},
+      signOptions: { expiresIn: '15m'}, // TODO: when youre done with the app set it to 1 hour
     })
   ],
   providers: [AuthService],

@@ -4,6 +4,7 @@ export type User = any;
 @Injectable()
 export class UserService {
     private readonly users = [
+        // FIXME: use a database instead of hardcoding the values in users
         {
             userId: 1,
             email: "john@gmail.com",
