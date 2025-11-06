@@ -16,4 +16,22 @@ export class UserService {
   async findOne(email: string) {
     return this.prisma.user.findUnique({ where: { email } });
   }
+
+  async updateRefreshToken(user_id: number, refreshToken: string) {
+    return this.prisma.user.update({
+      where: { id: user_id },
+      data: { refreshToken }
+    });
+  }
+
+  async removeRefreshToken(user_id: number) {
+    return this.prisma.user.update({
+      where: {id: user_id},
+      data: { refreshToken: null },
+    })
+  }
+
+  async findById(id: number){
+    return this.prisma.user.findUnique({ where: { id }})
+  }
 }
