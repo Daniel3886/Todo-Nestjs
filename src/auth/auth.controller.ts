@@ -28,13 +28,14 @@ export class AuthController {
 
     @Post('/refresh')
     async refresh(@Body('refreshToken') token: string) {
-        try {
-            const payload = this.jwtService.verify(token);
-            const newAccessToken = this.jwtService.sign({ sub: payload.sub });
-            return { accessToken: newAccessToken };
-        } catch (e) {
-            throw new UnauthorizedException('Invalid refresh token');
-        }
+        return this.authService.refresh(token);
+    }
+
+    @UseGuards(AuthGuard)
+    @Post('/logout')
+    async logout(@Request() req){
+        await this.authService.logout(req.user.sub);
+        return { message: 'Logged out succesfully' };
     }
     
     @UseGuards(AuthGuard)
