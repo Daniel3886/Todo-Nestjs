@@ -14,9 +14,26 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password      String
   refreshToken  String?
-  createdAt DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  todos         Todo[]
+}
+
+model Todo {
+  id          Int        @id @default(autoincrement())
+  title       String   
+  description String?
+  status      Status     @default(PENDING)
+  createdAt   DateTime   @default(now())
+  dueDate     DateTime?  @default(now())
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id])
+}
+
+enum Status {
+  DONE
+  PENDING
 }
