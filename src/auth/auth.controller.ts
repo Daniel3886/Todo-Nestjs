@@ -3,15 +3,11 @@ import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { JwtService } from '@nestjs/jwt';
 
 @Controller('/auth')
 export class AuthController {
         
-    constructor(
-        private authService: AuthService,
-        private jwtService: JwtService
-    ) {}
+    constructor(private readonly authService: AuthService) {}
 
     @HttpCode(HttpStatus.OK)
     @Post('/register')
