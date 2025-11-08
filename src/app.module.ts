@@ -5,6 +5,8 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import { TodoController } from './todo/todo.controller';
+import { TodoService } from './todo/todo.service';
 
 @Module({
   imports: [
@@ -13,7 +15,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     UsersModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, TodoController],
+  providers: [AppService, TodoService],
 })
 export class AppModule {}
