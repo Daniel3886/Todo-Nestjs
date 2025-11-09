@@ -7,6 +7,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { TodoController } from './todo/todo.controller';
 import { TodoService } from './todo/todo.service';
+import { AuthService } from './auth/auth.service';
+import { AuthController } from './auth/auth.controller';
 
 @Module({
   imports: [
@@ -15,7 +17,7 @@ import { TodoService } from './todo/todo.service';
     AuthModule,
     UsersModule,
   ],
-  controllers: [AppController, TodoController],
-  providers: [AppService, TodoService],
+  controllers: [AppController, AuthController, TodoController],
+  providers: [AppService,AuthService, TodoService],
 })
 export class AppModule {}
