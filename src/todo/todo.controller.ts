@@ -4,7 +4,10 @@ import { CreateTodoDto } from './dto/create-todo.dto';
 import { EditTodoDto } from './dto/edit-todo.dto';
 import { FilterTodoDto } from './dto/filter-todo.dto';
 import { TodoService } from './todo.service';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
+@ApiBearerAuth('access-token')
+@ApiTags('todo')
 @UseGuards(AuthGuard)
 @Controller('/todo')
 export class TodoController {
