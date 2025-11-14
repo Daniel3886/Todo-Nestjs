@@ -13,7 +13,7 @@ import { AuthGuard } from './auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import type { AuthRequest } from './types/auth.request';
+import type { RequestWithUser } from './types/request-with-user.type';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { SwaggerConfig } from 'src/config/swagger.config';
 
@@ -42,14 +42,14 @@ export class AuthController {
 
   @UseGuards(AuthGuard)
   @Post('/logout')
-  async logout(@Req() req: AuthRequest) {
+  async logout(@Req() req: RequestWithUser) {
     await this.authService.logout(req.user.id);
     return { message: 'Logged out successfully' };
   }
 
   @UseGuards(AuthGuard)
   @Get('/profile')
-  getProfile(@Req() req: AuthRequest) {
+  getProfile(@Req() req: RequestWithUser) {
     return req.user;
   }
 }
