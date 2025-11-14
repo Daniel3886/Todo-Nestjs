@@ -1,18 +1,13 @@
-import { IsOptional, IsIn, IsString, IsDateString } from "class-validator";
+import { IsEnum, IsOptional } from 'class-validator';
+import { BaseTodoDto, IsTodoTitle } from './base-todo.dto';
+import { $Enums } from '@prisma/client';
 
-export class EditTodoDto {
+export class EditTodoDto extends BaseTodoDto {
   @IsOptional()
-  @IsString()
+  @IsTodoTitle()
   title?: string;
 
   @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  status?: 'DONE' | 'PENDING';
-
-  @IsOptional()
-  @IsDateString()
-  dueDate?: string;
+  @IsEnum($Enums.Status)
+  status?: $Enums.Status;
 }
