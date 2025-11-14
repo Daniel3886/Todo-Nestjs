@@ -8,7 +8,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      transform: true, 
+      transform: true,
       whitelist: true,
     }),
   );
@@ -21,16 +21,16 @@ async function bootstrap() {
       Each task may optionally have a **due date**.`,
     )
     .addBearerAuth(
-    {
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-      name: 'Authorization',
-      description: 'Enter JWT token: ',
-      in: 'header',
-    },
-    'access-token',
-  )
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        description: 'Enter JWT token: ',
+        in: 'header',
+      },
+      'access-token',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -38,4 +38,5 @@ async function bootstrap() {
 
   await app.listen(3000);
 }
+
 bootstrap();
