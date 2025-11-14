@@ -6,46 +6,23 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { IS_PUBLIC_KEY } from './public.decorator';
-import { Reflector } from '@nestjs/core';
-import { ConfigService } from '@nestjs/config';
-
+import { JwtPayload } from './types/jwt-payload.type';
+import { RequestWithUser } from './types/request-with-user.type';
+import { AuthConfig } from 'src/config/auth.config';
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly reflector: Reflector,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly jwtService: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-
-    if (isPublic) {
-      return true;
-    }
-
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
     const token = this.extractTokenFromHeader(request);
+    if (!token) throw new UnauthorizedException('Missing token');
 
-    if (!token) {
-      throw new UnauthorizedException('Missing token');
-    }
+    const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
+      secret: AuthConfig.jwtSecret,
+    });
 
-    try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
-      request['user'] = {
-        id: payload.sub,
-        email: payload.email,
-      };
-    } catch {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
+    request.user = { id: payload.id, email: payload.email };
     return true;
   }
 
