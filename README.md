@@ -84,7 +84,7 @@ http://localhost:3000/api-docs
 4. For endpoints with **pagination**:
 
    * Use the `page` and `limit` query parameters.
-   * Example: `/todo?page=2&limit=5` will show the second page of results with 5 tasks per page.
+   * Example: `/todo?page=2&limit=5` will show the second page of results with 5 tasks.
 
 ---
 
