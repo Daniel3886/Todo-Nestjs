@@ -1,13 +1,18 @@
-import { IsNotEmpty, IsOptional, IsDateString } from "class-validator";
+import { IsOptional, IsString, MaxLength, IsDate } from 'class-validator';
+import { Type } from 'class-transformer';
+import { BaseTodoDto, IsTodoTitle } from './base-todo.dto';
 
-export class CreateTodoDto {
-  @IsNotEmpty()
-  title: string;
+export class CreateTodoDto extends BaseTodoDto {
+  @IsTodoTitle()
+  title!: string;
 
   @IsOptional()
-  description?: string;
+  @IsString()
+  @MaxLength(500)
+  declare description?: string;
 
   @IsOptional()
-  @IsDateString()
-  dueDate?: string;
+  @IsDate()
+  @Type(() => Date)
+  declare dueDate?: Date;
 }
