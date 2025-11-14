@@ -1,79 +1,91 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { UserService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+import { JwtPayload } from './types/jwt-payload.type';
+import { AuthInput } from './types/auth-input.type';
+import { AuthTokens } from './types/auth-tokens.type';
+import { AccessTokenResponse } from './types/access-token-response.type';
+import { AuthConfig } from 'src/config/auth.config';
 
 @Injectable()
 export class AuthService {
-    constructor(
-        private readonly userService: UserService,
-        private readonly jwtService: JwtService
-    ) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-    async register(
-        email: string, 
-        password: string
-    ): Promise<{ accessToken: string, refreshToken: string }> {
-        const exist = await this.userService.findOne(email);
+  private generateTokens(payload: JwtPayload): AuthTokens {
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: AuthConfig.accessTokenExpiresIn,
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      expiresIn: AuthConfig.refreshTokenExpiresIn,
+    });
 
-        if(exist){
-            throw new BadRequestException("Email already registered");
-        }   
+    return { accessTokens: accessToken, refreshTokens: refreshToken };
+  }
 
-        const user = await this.userService.create(email, password);
-        const payload = { sub: user.id, email: user.email }
-        const accessToken = this.jwtService.sign(payload);
-        const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d'});
+  async register(input: AuthInput): Promise<AuthTokens> {
+    const exist = await this.userService.findOne(input.email);
+    if (exist) throw new BadRequestException('Email already registered');
 
-        const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-        await this.userService.updateRefreshToken(user.id, hashedRefreshToken);
+    const user = await this.userService.create(input);
+    const payload: JwtPayload = { id: user.id, email: user.email };
+    const tokens = this.generateTokens(payload);
 
-        return { accessToken, refreshToken};
+    await this.userService.createSession(user.id, tokens.refreshTokens);
+    return tokens;
+  }
+
+  async login(input: AuthInput): Promise<AuthTokens> {
+    const user = await this.userService.findOne(input.email);
+
+    if (!user) throw new UnauthorizedException('Invalid email');
+
+    const passwordMatches = await this.userService.comparePassword(
+      input.password,
+      user.password,
+    );
+
+    if (!passwordMatches) {
+      throw new UnauthorizedException('Invalid password');
     }
 
-    async login(
-        email: string, 
-        password: string
-    ): Promise<{ accessToken: string; refreshToken: string }> {
-        const user = await this.userService.findOne(email);
+    const payload = { id: user.id, email: user.email };
+    const tokens = this.generateTokens(payload);
 
-        if(!user){
-            throw new UnauthorizedException("Invalid email");
-        }   
+    await this.userService.createSession(user.id, tokens.refreshTokens);
+    return tokens;
+  }
 
-        const passwordMatches = await bcrypt.compare(password, user.password);
-        if(!passwordMatches) {
-            throw new UnauthorizedException("Invalid password");
-        }
-        
-        const payload = { sub: user.id, email: user.email };
-        const accessToken = this.jwtService.sign(payload);
-        const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d'});
+  async refresh(refreshToken: string): Promise<AccessTokenResponse> {
+    try {
+      const payload: JwtPayload = this.jwtService.verify(refreshToken);
+      const session = await this.userService.findSessionByToken(refreshToken);
 
-        const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
-        await this.userService.updateRefreshToken(user.id, hashedRefreshToken);
-
-        return { accessToken, refreshToken };
-    };
-
-    async refresh(token: string): Promise<{ accessToken: string }> {
-        try {
-        const payload = this.jwtService.verify(token);
-        const user = await this.userService.findById(payload.sub);
-
-        if (!user || !user.refreshToken) throw new UnauthorizedException('Invalid refresh token');
-
-        const isMatch = await bcrypt.compare(token, user.refreshToken);
-        if (!isMatch) throw new UnauthorizedException('Invalid refresh token');
-
-        const newAccessToken = this.jwtService.sign({ sub: user.id, email: user.email });
-        return { accessToken: newAccessToken };
-    } catch (e) {
+      if (!session)
         throw new UnauthorizedException('Invalid or expired refresh token');
-        }
-    }
 
-    async logout(userId: number){
-        await this.userService.removeRefreshToken(userId);
+      const user = await this.userService.findById(payload.id);
+
+      if (!user)
+        throw new UnauthorizedException('Invalid or expired refresh token');
+
+      const accessToken = this.jwtService.sign<JwtPayload>(
+        { id: user.id, email: user.email },
+        { expiresIn: AuthConfig.accessTokenExpiresIn },
+      );
+      return { accessToken };
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
+  }
+
+  async logout(userId: string) {
+    await this.userService.removeAllSessionsForUser(userId);
+  }
 }
