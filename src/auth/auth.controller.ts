@@ -1,45 +1,55 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, Get, UseGuards, Request } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Get,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from './auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import type { AuthRequest } from './types/auth.request';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { SwaggerConfig } from 'src/config/swagger.config';
 
-@ApiBearerAuth('access-token')
-@ApiTags('auth')
+@ApiBearerAuth(SwaggerConfig.auth.bearerAuthName)
+@ApiTags(SwaggerConfig.auth.tag)
 @Controller('/auth')
 export class AuthController {
-        
-    constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {}
 
-    @HttpCode(HttpStatus.OK)
-    @Post('/register')
-    register(@Body() registerDto: RegisterDto){
-        return this.authService.register(registerDto.email, registerDto.password);
-            
-    }
+  @HttpCode(HttpStatus.CREATED)
+  @Post('/register')
+  register(@Body() registerDto: RegisterDto) {
+    return this.authService.register(registerDto);
+  }
 
-    @HttpCode(HttpStatus.OK)
-    @Post('/login')
-    login(@Body() loginDto: LoginDto){
-        return this.authService.login(loginDto.email, loginDto.password);
-    }
+  @HttpCode(HttpStatus.OK)
+  @Post('/login')
+  login(@Body() loginDto: LoginDto) {
+    return this.authService.login(loginDto);
+  }
 
-    @Post('/refresh')
-    async refresh(@Body('refreshToken') token: string) {
-        return this.authService.refresh(token);
-    }
+  @Post('/refresh-token')
+  async refreshToken(@Body() dto: RefreshTokenDto) {
+    return this.authService.refresh(dto.refreshToken);
+  }
 
-    @UseGuards(AuthGuard)
-    @Post('/logout')
-    async logout(@Request() req){
-        await this.authService.logout(req.user.sub);
-        return { message: 'Logged out succesfully' };
-    }
-    
-    @UseGuards(AuthGuard)
-    @Get('/profile')
-    getProfile(@Request() req) {
-        return req.user;
-    }
+  @UseGuards(AuthGuard)
+  @Post('/logout')
+  async logout(@Req() req: AuthRequest) {
+    await this.authService.logout(req.user.id);
+    return { message: 'Logged out successfully' };
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/profile')
+  getProfile(@Req() req: AuthRequest) {
+    return req.user;
+  }
 }
